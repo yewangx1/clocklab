@@ -7,28 +7,30 @@ namespace clocklab
     public class ExtraFeaturesView : ContentView
     {
         // Поля 
-        private Label _titleLabel; // заголовки Секундомер/Таймер/Мир. часы»
-        private GraphicsView _displayView; // холст, на котором рисуем цифры
-        private SevenSegmentDrawable _drawable; // «художник» — знает, КАК рисовать цифры
+        private Label _titleLabel;
+        private GraphicsView _displayView;
+        private SevenSegmentDrawable _drawable;
 
-        private Button _actionBtn1; // Старт / Пауза / Запустить
+        private Button _actionBtn1; // Старт / Пауза 
         private Button _actionBtn2; // Сброс
-        private Button _timerPlusBtn; // +1 минута
-        private Button _timerMinusBtn; // −1 минута
-        private Button _timerPlus10Btn; // +10 минут
+        private Button _timerPlusBtn;
+        private Button _timerMinusBtn;
+        private Button _timerPlus10Btn;
 
         private IDispatcherTimer _timer; // внутренние «часики» — тикают 4 раза в секунду и обновляют экран
         private int _timerTarget = 60; // По умолчанию 1 минута
-        private bool _isRunning = false; // идёт ли сейчас отсчёт
-        private string _currentMode = "Stopwatch"; // какой режим включён: Stopwatch / Timer / WorldClock
+        private bool _isRunning = false;
+        private string _currentMode = "Stopwatch"; 
 
-        // Считаем по реальному времени, а не по количеству тиков -> нет "уплывания"
-        private TimeSpan _accumulated = TimeSpan.Zero; // сколько уже натикало до последней паузы
-        private DateTime _runStart;                    // момент последнего старта (UTC)
+        private TimeSpan _accumulated = TimeSpan.Zero;
+        private DateTime _runStart; // момент последнего старта (UTC)
 
         // Сколько сек прошло: уже накопленное + (если идет то нынешнее время — время с момента старта)
         private int ElapsedSeconds =>
             (int)(_accumulated + (_isRunning ? DateTime.UtcNow - _runStart : TimeSpan.Zero)).TotalSeconds;
+
+        private TimeSpan ElapsedTime =>
+            _accumulated + (_isRunning ? DateTime.UtcNow - _runStart : TimeSpan.Zero);
 
         // Конструктор: создаём все элементы и раскладываем по экрану
         public ExtraFeaturesView()
@@ -36,21 +38,20 @@ namespace clocklab
             // Корневой контейнер — вертикальный стек с отступами
             var mainLayout = new VerticalStackLayout
             {
-                Padding = new Thickness(20), // по краям
-                Spacing = 10, // между элементами
-                BackgroundColor = Colors.Transparent, //прозрачный фон
-                HorizontalOptions = LayoutOptions.Fill //контейнер адаптируется растягивается
+                Padding = new Thickness(20),
+                Spacing = 10, 
+                BackgroundColor = Colors.Transparent, 
+                HorizontalOptions = LayoutOptions.Fill 
             };
 
-            // Заголовок по центру
             _titleLabel = new Label { Text = "Секундомер", TextColor = Colors.White, FontSize = 18, HorizontalOptions = LayoutOptions.Center };
 
-            // Холст для цифр: создаём «художника» и передаём его GraphicsView
+            // Холст для цифр: создаём «художника» 
             _drawable = new SevenSegmentDrawable();
             _displayView = new GraphicsView
             {
-                Drawable = _drawable, //говорим холсту: «рисуй через вот этот объект» (SevenSegmentDrawable). У него есть метод Draw, который и выводит цифры.
-                HeightRequest = 100, //высота холста
+                Drawable = _drawable,
+                HeightRequest = 100,
                 HorizontalOptions = LayoutOptions.Fill
             };
 
@@ -60,8 +61,7 @@ namespace clocklab
             var btnTimer = new Button { Text = "Таймер", FontSize = 12, BackgroundColor = Colors.DarkSlateGray, TextColor = Colors.White };
             var btnWorld = new Button { Text = "Мир. часы", FontSize = 12, BackgroundColor = Colors.DarkSlateGray, TextColor = Colors.White };
 
-            // Клик по кнопке = переключение режима (SetMode сам всё настроит)
-            // s e лямбда короткая ф-я обработчик
+            // Клик по кнопке = переключение режима
             btnStopwatch.Clicked += (s, e) => SetMode("Stopwatch");
             btnTimer.Clicked += (s, e) => SetMode("Timer");
             btnWorld.Clicked += (s, e) => SetMode("WorldClock");
@@ -90,7 +90,7 @@ namespace clocklab
             _actionBtn1 = new Button { Text = "Старт", BackgroundColor = Colors.Green, TextColor = Colors.White };
             _actionBtn2 = new Button { Text = "Сброс", BackgroundColor = Colors.DarkRed, TextColor = Colors.White };
 
-            //при клике вызвать метод ActionBtn1_Clicked (Старт/Пауза). и сброс
+            //при клике вызвать метод ActionBtn1_Clicked (Старт/Пауза) и сброс
             _actionBtn1.Clicked += ActionBtn1_Clicked;
             _actionBtn2.Clicked += ActionBtn2_Clicked;
 
@@ -108,22 +108,19 @@ namespace clocklab
             //создаем таймер
             _timer = Dispatcher.CreateTimer();
             // Как часто тикать. 250 мс = 4 раза в секунду. чтобы дисплей не опаздывал
-            _timer.Interval = TimeSpan.FromMilliseconds(250);
+            _timer.Interval = TimeSpan.FromMilliseconds(16);
             //Каждый раз, когда тикнешь — вызови метод Timer_Tick
             _timer.Tick += Timer_Tick;
-            //Запуск. 
             _timer.Start();
 
-            // старт в реж секундомер
             SetMode("Stopwatch");
         }
 
-        // переключение режима
         private void SetMode(string mode)
         {
             _currentMode = mode;
-            _isRunning = false; // при смене режима отсчёт останавливаем
-            _accumulated = TimeSpan.Zero; // и обнуляем накопленное время
+            _isRunning = false; 
+            _accumulated = TimeSpan.Zero;
 
             if (mode == "Stopwatch")
             {
@@ -155,7 +152,7 @@ namespace clocklab
                 _timerPlus10Btn.IsVisible = false;
             }
 
-            UpdateDisplay(); // сразу перерисовать экран под новый режим
+            UpdateDisplay();
         }
 
         //Обработчик кнопки Старт / Пауза
@@ -179,7 +176,6 @@ namespace clocklab
                 _isRunning = true;
             }
 
-            // меняем надпись на кнопке
             _actionBtn1.Text = _isRunning ? "Пауза" : "Старт";
         }
 
@@ -212,11 +208,11 @@ namespace clocklab
             // Если отсчёт не идёт — ничего не делаем
             if (!_isRunning) return;
 
-            // Таймер досчитал до нуля? Останавливаем и фиксируем, что «дошли до цели»
+            // Таймер досчитал до нуля? Останавливаем и фиксируем
             if (_currentMode == "Timer" && ElapsedSeconds >= _timerTarget)
             {
                 _isRunning = false;
-                _accumulated = TimeSpan.FromSeconds(_timerTarget); //превращает число секунд в объект TimeSpan (отрезок времени)
+                _accumulated = TimeSpan.FromSeconds(_timerTarget);
                 //надо зафиксировать _accumulated ровно на цели (60 сек), а не на том, что натикало (61 из-за перескока тика)
                 _actionBtn1.Text = "Старт";
             }
@@ -224,10 +220,6 @@ namespace clocklab
             UpdateDisplay();
         }
 
-        // Получить время в нужном городе с учётом летнего времени
-        // utcNow — текущее время в UTC(универсальное, без часового пояса).
-        // ianaId — имя пояса в формате IANA: "Asia/Tokyo", "Europe/London", "America/New_York". Работает на Linux, macOS, iOS, Android.
-        // windowsId — имя того же пояса в формате Windows: "Tokyo Standard Time", "GMT Standard Time", "Eastern Standard Time". Работает на Windows.
         private static DateTime GetCityTime(DateTime utcNow, string ianaId, string windowsId)
         {
             try
@@ -245,9 +237,10 @@ namespace clocklab
         {
             if (_currentMode == "Stopwatch")
             {
-                _drawable.Labels = Array.Empty<string>(); // Labels = пустой массив, подписей городов нет
-                _drawable.TimeText = TimeSpan.FromSeconds(ElapsedSeconds).ToString(@"hh\:mm\:ss");
-                _drawable.DigitWidth = 10f;
+                _drawable.Labels = Array.Empty<string>();
+                _drawable.TimeText = ElapsedTime.ToString(@"hh\:mm\:ss\.ff");
+            //    _drawable.TimeText = TimeSpan.FromSeconds(ElapsedSeconds).ToString(@"hh\:mm\:ss");
+                _drawable.DigitWidth = 5.5f;
             }
             else if (_currentMode == "Timer")
             {
@@ -272,14 +265,14 @@ namespace clocklab
                 _drawable.DigitWidth = 10f;
             }
 
-            _displayView.Invalidate(); //Просим GraphicsView перерисоваться (он вызовет Draw у _drawable)
+            _displayView.Invalidate();
         }
     }
 
     public class SevenSegmentDrawable : IDrawable
     {
         //настройки перед каждой отрисовкой
-        public string TimeText { get; set; } = "00:00"; // что рисовать (может содержать пробелы = группы)
+        public string TimeText { get; set; } = "00:00"; // что рисовать 
         public float DigitWidth { get; set; } = 15f;
         public string[] Labels { get; set; } = Array.Empty<string>();
 
@@ -303,7 +296,7 @@ namespace clocklab
                 foreach (char c in group)
                 {
                     // Двоеточие занимает только толщину, цифра — полную ширину; + промежуток
-                    totalWidth += (c == ':' ? thickness : DigitWidth) + spacing;
+                    totalWidth += (c == ':' || c == '.' ? thickness : DigitWidth) + spacing;
                 }
                 totalWidth += 15; // Расстояние между группами (городами)
             }
@@ -326,7 +319,7 @@ namespace clocklab
                     canvas.FontColor = Colors.White;
                     canvas.FontSize = 12;
                     float groupWidth = 0; //Считаем ширину этой группы — чтобы подпись встала ровно над ней и была отцентрирована.
-                    foreach (char c in group) groupWidth += (c == ':' ? thickness : DigitWidth) + spacing;
+                    foreach (char c in group) groupWidth += (c == ':' || c == '.' ? thickness : DigitWidth) + spacing;
                     groupWidth -= spacing;
 
                     canvas.DrawString(Labels[i], currentX, startY - 50, groupWidth, 20, HorizontalAlignment.Center, VerticalAlignment.Center);
@@ -340,6 +333,10 @@ namespace clocklab
                     if (c == ':')
                     {
                         DrawDot(canvas, currentX + 2, startY - 10, thickness, Colors.Red);
+                        DrawDot(canvas, currentX + 2, startY + 10, thickness, Colors.Red);
+                        currentX += thickness + spacing;
+                    }
+                    else if (c == '.') {
                         DrawDot(canvas, currentX + 2, startY + 10, thickness, Colors.Red);
                         currentX += thickness + spacing;
                     }
@@ -357,18 +354,24 @@ namespace clocklab
 
         private void DrawDigit(ICanvas canvas, char digit, float cx, float cy, float w, float h, float t)
         {
-            float halfW = w / 2;
-            float halfH = h / 2;
-            float offset = t / 2;
-            Color dimColor = Color.FromRgba(50, 0, 0, 255);
+            float halfW = w / 2;     // половина ширины — от центра до края по горизонтали
+            float halfH = h / 2;     // половина высоты — от центра до края по вертикали
+            float offset = t / 2;    // половина толщины — нужен для «поджатия» палочек
+            Color dimColor = Color.FromRgba(50, 0, 0, 255); //подсветка цифр
 
-            DrawSegmentLine(canvas, cx - halfW + offset, cy - halfH, cx + halfW - offset, cy - halfH, t, dimColor);
-            DrawSegmentLine(canvas, cx + halfW, cy - halfH + offset, cx + halfW, cy - offset, t, dimColor);
-            DrawSegmentLine(canvas, cx + halfW, cy + offset, cx + halfW, cy + halfH - offset, t, dimColor);
-            DrawSegmentLine(canvas, cx - halfW + offset, cy + halfH, cx + halfW - offset, cy + halfH, t, dimColor);
-            DrawSegmentLine(canvas, cx - halfW, cy + offset, cx - halfW, cy + halfH - offset, t, dimColor);
-            DrawSegmentLine(canvas, cx - halfW, cy - halfH + offset, cx - halfW, cy - offset, t, dimColor);
-            DrawSegmentLine(canvas, cx - halfW + offset, cy, cx + halfW - offset, cy, t, dimColor);
+            DrawSegmentLine(canvas, cx - halfW + offset, cy - halfH, cx + halfW - offset, cy - halfH, t, dimColor); // A
+            DrawSegmentLine(canvas, cx + halfW, cy - halfH + offset, cx + halfW, cy - offset, t, dimColor);          // B
+            DrawSegmentLine(canvas, cx + halfW, cy + offset, cx + halfW, cy + halfH - offset, t, dimColor); // C
+            DrawSegmentLine(canvas, cx - halfW + offset, cy + halfH, cx + halfW - offset, cy + halfH, t, dimColor); // D
+            DrawSegmentLine(canvas, cx - halfW, cy + offset, cx - halfW, cy + halfH - offset, t, dimColor); // E
+            DrawSegmentLine(canvas, cx - halfW, cy - halfH + offset, cx - halfW, cy - offset, t, dimColor);          // F
+            DrawSegmentLine(canvas, cx - halfW + offset, cy, cx + halfW - offset, cy, t, dimColor);                  // G
+
+            //   A
+         //    F   B
+         //      G
+         //    E   C 
+         //      D
 
             Color onColor = Colors.Red;
             bool[] segments = GetSegmentsForDigit(digit);

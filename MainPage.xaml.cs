@@ -6,7 +6,7 @@ namespace clocklab
     {
         public MainPage()
         {
-            InitializeComponent();
+            InitializeComponent(); //грузит XAML, строит UI
         }
     }
 }
